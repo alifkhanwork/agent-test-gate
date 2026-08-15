@@ -1,6 +1,6 @@
 {
   "name": "@siliconvalleyglobal/agent-test-gate",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Smart Test Impact Analysis CLI and library that runs only tests affected by an AI agent's commit",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

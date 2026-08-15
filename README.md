@@ -1,164 +1,132 @@
-# @siliconvalleyglobal/agent-test-gate
+# agent-test-gate 🚦
 
-> Smart Test Impact Analysis (TIA) CLI & library that blocks an AI agent's commit from landing until the tests **actually affected by the change** pass — fast enough to gate every commit without slowing development down.
+> **Scoped, Affected-Only Test Gating for AI Agent Commits**
 
-[![npm version](https://img.shields.io/npm/v/@siliconvalleyglobal/agent-test-gate.svg)](https://www.npmjs.com/package/@siliconvalleyglobal/agent-test-gate)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+A Project by [**SILICON VALLEY GLOBAL PH INC**](https://svg.ph/)
 
----
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![npm version](https://img.shields.io/npm/v/@siliconvalleyglobal/agent-test-gate-red.svg)](https://www.npmjs.com/package/@siliconvalleyglobal/agent-test-gate)
+[![Node version](https://img.shields.io/node/v/@siliconvalleyglobal/agent-test-gate.svg)](https://nodejs.org/)
+[![Tests Passing](https://img.shields.io/badge/tests-passing-brightgreen.svg)](https://github.com/alifkhanwork/agent-test-gate)
 
-## Problem Solved
-
-Running a full test suite on every single agent-generated commit is often too slow to enforce in practice. Teams either skip testing on agent commits entirely or only check them in CI much later — well after broken changes have already stacked on top of other work.
-
-`agent-test-gate` computes which tests are actually affected by the files an agent just changed and runs **only those tests**, enabling instant commit gating before code lands.
+**agent-test-gate** blocks an AI coding agent's commit from landing until the tests actually affected by the change pass — not the entire suite. Created and maintained by [SILICON VALLEY GLOBAL PH INC](https://svg.ph/).
 
 ---
 
-## Key Features
+## ⚠️ The Problem
 
-- 🎯 **Incremental Test Impact Analysis (TIA)**: Constructs a directed dependency graph using static AST parsing (JS/TS + Python) and performs reverse graph traversal to find downstream test files.
-- ⚡ **Incremental Graph Caching**: Hashes file contents (`.agent-test-gate-cache.json`) to incrementally update the graph without re-parsing unchanged files.
-- 🛡️ **Fail-Safe Confidence Threshold**: If dynamic imports (`import(var)`, `require(var)`), unresolvable specifiers, or unparseable files lower graph confidence below `confidenceThreshold` (default `0.8`), it safely falls back to running the full test suite.
-- 🔌 **Pluggable Test Runner Adapters**: Out-of-the-box support for **Vitest**, **Jest**, and **Pytest** via extensible `TestRunnerAdapter` interface.
-- 🤝 **Agent Integration Ready**: Direct inline integration API (`getAffectedTests` and `runGate`) for [`@siliconvalleyglobal/agent-permit`](https://github.com/alifkhanwork/agent-permit).
+Running a full test suite on every single agent-generated commit is often too slow to enforce in practice — a suite that takes minutes to run can't realistically gate every small change an agent makes throughout a session. So teams either skip testing at commit time entirely and rely on CI to catch problems much later, or they let agents commit unchecked and hope nothing broke. Both outcomes mean broken changes stack on top of each other before anyone notices.
+
+**agent-test-gate** solves this by computing exactly which tests are affected by the files an agent just changed, and running only those — fast enough to gate every single commit, not just a nightly CI run.
 
 ---
 
-## Research & Rationale
+## 🧩 Key Architecture Pillars
 
-`agent-test-gate` adapts established test impact & build graph algorithms from proven industry tools:
-- **Nx (`affected`)**: Workspace graph modeling from static import AST analysis with incremental file caching.
-- **Bazel (`rdeps`)**: Reverse dependency traversal query to resolve affected root test targets.
-- **Jest (`--changedSince`)**: AST extraction of module dependencies to find reachable spec files.
-- **pytest-testmon**: Impact-based selective execution for Python suites.
+### Change Detection (`src/graph/diff.ts`)
+Reads the current git diff (staged changes or a specified commit range) to get the exact list of changed files.
+
+### Affected-Test Mapping (`src/graph/dependencyGraph.ts`)
+Builds an import/require dependency graph connecting changed source files to the tests that actually exercise them, based on proven approaches from established test-impact-analysis tools rather than a from-scratch algorithm.
+
+### Test Runner Adapters (`src/runners/`)
+Pluggable adapters for Vitest, Jest, and (via the companion `agent-test-gate-pytest` package) pytest — each knows how to invoke its runner against a specific, scoped file list.
+
+### Gate Enforcement (`src/cli/index.ts`)
+Exits non-zero (or returns a deny through the `agent-permit` integration) if affected tests fail, blocking the commit before it lands.
+
+### Fail-Safe Fallback (`src/graph/confidence.ts`)
+When the dependency graph can't be computed with high confidence — dynamic imports, unusual module resolution — the tool falls back to running a broader or full suite rather than silently under-testing, and clearly logs when it's operating in fallback mode.
 
 ---
 
-## Installation
+## 📊 Supported Test Runners
+
+| Runner | Ecosystem | Status |
+| :--- | :--- | :--- |
+| **Vitest** | JS/TS | Supported |
+| **Jest** | JS/TS | Supported |
+| **pytest** | Python | Supported via `agent-test-gate-pytest` |
+| **Others** | — | Planned — contributions welcome |
+
+---
+
+## 💻 Quickstart
+
+### Installation
 
 ```bash
-npm install --save-dev @siliconvalleyglobal/agent-test-gate
-```
+# Install the core package
+npm install @siliconvalleyglobal/agent-test-gate
 
-For Python projects using `pytest`, install the companion adapter:
-
-```bash
+# Optional: pytest adapter for Python projects
 pip install agent-test-gate-pytest
 ```
 
----
-
-## CLI Usage
-
-### 1. `agent-test-gate run`
-Detects changed files in git diff and executes affected tests:
+### Usage
 
 ```bash
-# Run affected tests for current staged git changes
-npx agent-test-gate run --staged
+# Run affected tests for your currently staged changes:
+npx agent-test-gate run
 
-# Run affected tests for a specific git commit range
-npx agent-test-gate run --commit HEAD~1..HEAD
+# Check what the tool thinks is affected, without running anything:
+npx agent-test-gate check src/auth.ts src/utils/token.ts
 
-# Force running full test suite regardless of graph
-npx agent-test-gate run --all
-```
-
-### 2. `agent-test-gate check <files...>`
-Dry-run affected test resolution for given files (useful for debugging impact resolution):
-
-```bash
-npx agent-test-gate check src/utils.ts src/components/Button.tsx
-```
-
-Outputs graph confidence score and affected test file list without executing tests.
-
-### 3. `agent-test-gate graph [files...]`
-Outputs computed dependency graph in tree or JSON format:
-
-```bash
-npx agent-test-gate graph --json
+# Debug the computed dependency graph:
+npx agent-test-gate graph
 ```
 
 ---
 
-## Configuration (`.agent-test-gate.json`)
+## ⚙️ Configuration
 
-Create `.agent-test-gate.json` in your repository root:
+Project-level config (`.agent-test-gate.json`):
 
 ```json
 {
   "runner": "vitest",
-  "include": [
-    "src/**/*",
-    "lib/**/*",
-    "tests/**/*"
-  ],
-  "exclude": [
-    "**/node_modules/**",
-    "**/dist/**"
-  ],
-  "testPatterns": [
-    "**/*.test.[jt]s*",
-    "**/*.spec.[jt]s*",
-    "**/test_*.py",
-    "**/*_test.py"
-  ],
-  "confidenceThreshold": 0.8
+  "include": ["src/**"],
+  "exclude": ["**/*.stories.tsx"],
+  "confidenceThreshold": 0.8,
+  "fallback": "full-suite"
 }
 ```
 
+If graph-computation confidence falls below `confidenceThreshold`, the gate automatically runs the full suite instead of a scoped subset.
+
 ---
 
-## Agent Integration (`agent-permit`)
-
-You can call `agent-test-gate` programmatically in Node.js / TypeScript as an inline pre-approval check:
+## 🔌 Agent Integration Example
 
 ```typescript
-import { runGate, getAffectedTests } from "@siliconvalleyglobal/agent-test-gate";
+import { runGate } from "@siliconvalleyglobal/agent-test-gate";
 
-// 1. Dry run / query affected tests
-const impact = await getAffectedTests(["src/auth.ts"]);
-console.log("Affected tests:", impact.affectedTests);
-console.log("Confidence:", impact.confidenceScore);
+const result = await runGate(changedFiles);
 
-// 2. Execute gate check before permitting a commit
-const gate = await runGate(undefined, { staged: true });
-if (!gate.passed) {
-  throw new Error("Agent commit denied: Affected tests failed!");
+if (!result.passed) {
+  // agent-permit blocks the commit action here
+  console.error(`[agent-test-gate] Blocked: ${result.failedTests.length} affected test(s) failed`);
 }
 ```
 
 ---
 
-## Architecture Overview
+## 🗺️ Roadmap
 
-```
-src/
-├── graph/
-│   ├── dependencyGraph.ts   # Core reverse graph TIA engine & confidence calculator
-│   ├── jsParser.ts          # Babel AST static import extractor (TS, JS, JSX, TSX)
-│   ├── pyParser.ts          # Python AST static import parser
-│   ├── resolver.ts          # TS path alias & extension resolver
-│   └── cache.ts             # Incremental SHA-256 hash cache manager
-├── runners/
-│   ├── base.ts              # TestRunnerAdapter interface definition
-│   ├── vitest.ts            # Vitest adapter
-│   ├── jest.ts              # Jest adapter
-│   └── pytest.ts            # Pytest adapter
-├── cli/
-│   └── index.ts             # Commander CLI subcommands (run, check, graph)
-└── integrations/
-    └── agentPermit.ts       # Direct agent-permit gating API
-```
+- [ ] Additional test runner adapters (Go test, RSpec, JUnit)
+- [ ] Persistent graph cache shared across CI runs
+- [ ] GitHub Action for PR-level affected-test reporting
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
-For guidelines on adding new test runner adapters or contributing to core graph features, see [`CONTRIBUTING.md`](CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add a new test runner adapter or improve dependency-graph accuracy.
 
-## License
+---
 
-[MIT](LICENSE) © Silicon Valley Global
+## 📄 License
+
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
+
+Copyright (c) 2026 [SILICON VALLEY GLOBAL PH INC](https://svg.ph/).
