@@ -31,11 +31,24 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run typecheck && npm run test && npm run build"
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build",
+    "pack:dry": "npm pack --dry-run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alifkhanwork/agent-test-gate.git"
+  },
+  "homepage": "https://github.com/alifkhanwork/agent-test-gate#readme",
+  "bugs": {
+    "url": "https://github.com/alifkhanwork/agent-test-gate/issues"
   },
   "keywords": [
     "ai",
+    "claude",
+    "gemini",
+    "antigravity",
     "ai-agent",
+    "ai-agents",
     "test-impact-analysis",
     "tia",
     "affected-tests",
@@ -46,6 +59,15 @@
     "pytest",
     "agent-permit",
     "developer-tools",
+    "devtools",
+    "llm",
+    "llm-tools",
+    "ai-coding-assistant",
+    "cursor",
+    "claude-code",
+    "cline",
+    "codex",
+    "windsurf",
     "ci-cd"
   ],
   "author": "SVG Team",
@@ -65,3 +87,4 @@
     "vitest": "^1.6.0"
   }
 }
+
