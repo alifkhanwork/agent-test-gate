@@ -13,7 +13,7 @@
     }
   },
   "bin": {
-    "agent-test-gate": "./bin/agent-test-gate.js"
+    "agent-test-gate": "bin/agent-test-gate.js"
   },
   "files": [
     "dist",
