@@ -1,0 +1,67 @@
+{
+  "name": "@siliconvalleyglobal/agent-test-gate",
+  "version": "0.1.0",
+  "description": "Smart Test Impact Analysis CLI and library that runs only tests affected by an AI agent's commit",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "agent-test-gate": "./bin/agent-test-gate.js"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "CONTRIBUTING.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build"
+  },
+  "keywords": [
+    "ai",
+    "ai-agent",
+    "test-impact-analysis",
+    "tia",
+    "affected-tests",
+    "commit-gate",
+    "testing",
+    "vitest",
+    "jest",
+    "pytest",
+    "agent-permit",
+    "developer-tools",
+    "ci-cd"
+  ],
+  "author": "SVG Team",
+  "license": "MIT",
+  "dependencies": {
+    "@babel/parser": "^7.26.9",
+    "@babel/traverse": "^7.26.9",
+    "commander": "^12.1.0",
+    "picomatch": "^4.0.2"
+  },
+  "devDependencies": {
+    "@types/babel__traverse": "^7.20.6",
+    "@types/node": "^20.14.9",
+    "@types/picomatch": "^3.0.2",
+    "tsup": "^8.1.0",
+    "typescript": "^5.5.2",
+    "vitest": "^1.6.0"
+  }
+}

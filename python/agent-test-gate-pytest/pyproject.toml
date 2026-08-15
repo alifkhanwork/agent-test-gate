@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-test-gate-pytest"
+version = "0.1.0"
+description = "Pytest impact analysis plugin & CLI adapter for agent-test-gate"
+readme = "README.md"
+authors = [{ name = "SVG Team" }]
+license = { text = "MIT" }
+dependencies = [
+    "pytest>=7.0.0"
+]
+requires-python = ">=3.8"
+
+[project.scripts]
+agent-test-gate-pytest = "agent_test_gate_pytest.cli:main"
+
+[project.entry-points."pytest11"]
+agent_test_gate = "agent_test_gate_pytest.pytest_plugin"

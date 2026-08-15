@@ -1,0 +1,10 @@
+node_modules
+dist
+.agent-test-gate-cache.json
+*.log
+.DS_Store
+__pycache__
+*.pyc
+*.egg-info
+build
+.pytest_cache
